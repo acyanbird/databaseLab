@@ -24,13 +24,13 @@ public class BioSystem {
 
         boolean repeatMenu = true;
 
-	//Assume no files have been provided on the command line - all are set to null
-	//For each extra command line argument, add it to the list of files
+        //Assume no files have been provided on the command line - all are set to null
+        //For each extra command line argument, add it to the list of files
         String files[] = {null,null,null};
         for(int i = 0; i < args.length; i++){
             files[i] = "'" + args[i] + "'";
         }
-        
+
         while(repeatMenu){
             System.out.println("_________________________");
             System.out.println("________BioSystem________");
@@ -43,7 +43,9 @@ public class BioSystem {
             System.out.println("6: Get species with smaller birthweight than...");
             System.out.println("7: List all members of the Falco genus");
             System.out.println("8: List all members of the ... genus");
-            
+            System.out.println("9: Show the number of species that have an adult weight greater than 4000g");
+            System.out.println("a: Show the common name of all species that have a litter/clutch size greater than 40000.");
+
             System.out.println("q: Quit");
 
             String menuChoice = readEntry("Please choose an option: ");
@@ -93,18 +95,24 @@ public class BioSystem {
                     String genus = readEntry("Please supply a genus such as 'Accipiter', note this is case sensitive so the first letter must be capitalised: ");
                     listAllOfGenus(conn,genus);
                     break;
+                case'9':
+                    showAdultMoreThan4000g(conn);
+                    break;
+                case 'a':
+                    commonNameLitterCluch(conn);
+                    break;
                 case 'q':
                     repeatMenu = false;
                     break;
-                default: 
+                default:
                     System.out.println("Invalid option");
             }
         }
     }
 
     /**
-    * @param conn An open database connection 
-    */
+     * @param conn An open database connection
+     */
     public static void deleteAllData(Connection conn){
         try{
             PreparedStatement delStatement = conn.prepareStatement("DELETE FROM anage;");
@@ -132,9 +140,9 @@ public class BioSystem {
     }
 
     /**
-    * @param conn An open database connection 
-    * @param data the name of the file that contains the anage TSV dataset 
-    */
+     * @param conn An open database connection
+     * @param data the name of the file that contains the anage TSV dataset
+     */
     public static void insertAnageData(Connection conn, String filename1){
         try{
             String[][] data = loadDataFromTSV(filename1);
@@ -207,9 +215,9 @@ public class BioSystem {
     }
 
     /** Inserts the species data from NBN Atlas
-    * @param conn An open database connection 
-    * @param fn The name of the file that contains the NBN CSV file
-    */
+     * @param conn An open database connection
+     * @param fn The name of the file that contains the NBN CSV file
+     */
     public static void insertNBNData(Connection conn, String fn){
         try{
             String[][] data = loadDataFromCSV(fn);
@@ -293,13 +301,13 @@ public class BioSystem {
 
                 //DatasetID
                 insertStatement.setString(5,data[i][39]);
-                
+
                 //Licence
                 insertStatement.setString(6,data[i][2]);
 
                 //RightsHolder
                 insertStatement.setString(7,data[i][3]);
-                
+
                 //Recorder
                 String r = data[i][25];
                 if(r.equals("") || r.toLowerCase().equals("withheld")){
@@ -317,7 +325,7 @@ public class BioSystem {
 
                 insertStatement.addBatch();
             }
-            
+
             int[] updateCounts = insertStatement.executeBatch();
 
             int totalAdded = 0;
@@ -330,7 +338,7 @@ public class BioSystem {
             // if(numRows % updatePercentRows == 0){
             //     System.out.println("Added " + numRows + " out of " + data.length + " (" + Math.round(((float)numRows / data.length)*100) + "%)");
             // }
-            
+
         }catch(SQLException e){
             System.err.format("SQL State: %s\n%s\n", e.getSQLState(), e.getMessage());
             e.printStackTrace();
@@ -393,7 +401,7 @@ public class BioSystem {
     }
 
     /**
-     * Lists the species and common name of all species in a particular genus 
+     * Lists the species and common name of all species in a particular genus
      * This is assumed to be only those species where the first part of the binomial species name matches the genus parameter
      * @param conn An open database connection
      * @param genus The genus being matched
@@ -451,9 +459,9 @@ public class BioSystem {
     }
 
     /**
-    * @param conn An open database connection 
-    * @param filename The filename for the tsv that you are loading
-    */
+     * @param conn An open database connection
+     * @param filename The filename for the tsv that you are loading
+     */
     public static String[][] loadDataFromTSV(String filename) {
         try{
             Scanner scan = new Scanner(new File(filename));
@@ -468,7 +476,7 @@ public class BioSystem {
             String headerLine = scan.nextLine();
             String[] headers = headerLine.split("\t");
             int columns = headers.length;
-            
+
             String[][] res = new String[lines][columns];
 
             int line = 0;
@@ -487,9 +495,9 @@ public class BioSystem {
 
 
     /**
-    * @param conn An open database connection 
-    * @param filename The filename for the csv that you are loading
-    */
+     * @param conn An open database connection
+     * @param filename The filename for the csv that you are loading
+     */
     public static String[][] loadDataFromCSV(String filename) {
 
         String[][] loadedData = new String[0][0];
@@ -507,14 +515,14 @@ public class BioSystem {
             }
 
             loadedData = new String[lineCount][colCount];
-            
+
             reader = new CSVReader(new FileReader(filename));
             lineCount = 0;
             while ((nextLine = reader.readNext()) != null) {
                 //Skip the first row
                 if(lineCount == 0){
-                     lineCount++;                    
-                     continue;
+                    lineCount++;
+                    continue;
                 }
 
                 //Copy this row into loadedData array
@@ -551,15 +559,15 @@ public class BioSystem {
             }
         }catch(SQLException e){
             System.err.format("SQL State: %s\n%s\n", e.getSQLState(), e.getMessage());
-            e.printStackTrace();            
+            e.printStackTrace();
         }
     }
 
     /**
      * Show the details of all animals with a birthweight under a supplied weight
-    * @param conn An open database connection 
-    * @param data a 2d array of String data
-    */
+     * @param conn An open database connection
+     * @param data a 2d array of String data
+     */
     private static void getSmallerBirthWeight(Connection conn, float birthWeight){
         String selectQuery = "SELECT species, commonname, birthweight FROM anage WHERE birthWeight < ?";
         try{
@@ -594,7 +602,7 @@ public class BioSystem {
      */
 
     private static String readEntry(String prompt) {
-        
+
         try {
             StringBuffer buffer = new StringBuffer();
             System.out.print(prompt);
@@ -610,19 +618,19 @@ public class BioSystem {
         }
 
     }
-     
+
     /**
-    * Gets the connection to the database using the Postgres driver, connecting via unix sockets
-    * @return A JDBC Connection object
-    */
+     * Gets the connection to the database using the Postgres driver, connecting via unix sockets
+     * @return A JDBC Connection object
+     */
     public static Connection getSocketConnection(){
         Properties props = new Properties();
         props.setProperty("socketFactory", "org.newsclub.net.unix.AFUNIXSocketFactory$FactoryArg");
         props.setProperty("socketFactoryArg",System.getenv("HOME") + "/cs258-postgres/postgres/tmp/.s.PGSQL.5432");
         Connection conn;
         try{
-          conn = DriverManager.getConnection("jdbc:postgresql://localhost/nature", props);
-          return conn;
+            conn = DriverManager.getConnection("jdbc:postgresql://localhost/nature", props);
+            return conn;
         }catch(Exception e){
             e.printStackTrace();
         }
@@ -634,7 +642,7 @@ public class BioSystem {
      * @return A JDBC Connection object
      */
     public static Connection getPortConnection() {
-        
+
         String user = "postgres";
         String passwrd = "password";
         Connection conn;
@@ -657,5 +665,41 @@ public class BioSystem {
 
 
     }
+
+
+    private static void showAdultMoreThan4000g(Connection conn){
+        String selectQuery = "SELECT count(*) FROM anage WHERE anage.adultweight > 4000";
+        try{
+            PreparedStatement preparedStatement = conn.prepareStatement(selectQuery);
+            ResultSet Count = preparedStatement.executeQuery();
+            while(Count.next()){
+                System.out.println(Count.getInt(1));
+                // get the column 1 of current row
+                // row get down +1 per time
+            }
+        }catch(SQLException e){
+            System.err.format("SQL State: %s\n%s\n", e.getSQLState(), e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    private static void commonNameLitterCluch(Connection conn){
+        String selectQuery = "SELECT anage.commonname FROM anage WHERE anage.litterorclutchsize > 40000";
+        try{
+            PreparedStatement preparedStatement = conn.prepareStatement(selectQuery);
+            ResultSet Count = preparedStatement.executeQuery();
+            while(Count.next()){
+                String commonName = Count.getString(1);
+                // get the column 1 of current row, only 1 column is selected
+                // row get down +1 per time
+                System.out.println(commonName);
+            }
+        }catch(SQLException e){
+            System.err.format("SQL State: %s\n%s\n", e.getSQLState(), e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+
 
 }
