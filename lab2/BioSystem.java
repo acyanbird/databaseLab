@@ -14,6 +14,7 @@ import java.io.IOException;
 import java.util.Properties;
 import java.util.Scanner;
 
+
 public class BioSystem {
 
     public static void main(String[] args) {
@@ -45,6 +46,10 @@ public class BioSystem {
             System.out.println("8: List all members of the ... genus");
             System.out.println("9: Show the number of species that have an adult weight greater than 4000g");
             System.out.println("a: Show the common name of all species that have a litter/clutch size greater than 40000.");
+            System.out.println("b: Show the species name and common name of species that have an adultweight greater than 200 times their birthweight.");
+            System.out.println("c: Change the weight of 'Apis mellifera' ('Honey bee') to be 3g.");
+            System.out.println("d: Insert Jungle nightjar.");
+            System.out.println("e: Delete Jungle nightjar.");
 
             System.out.println("q: Quit");
 
@@ -100,6 +105,18 @@ public class BioSystem {
                     break;
                 case 'a':
                     commonNameLitterCluch(conn);
+                    break;
+                case 'b':
+                    adult400More(conn);
+                    break;
+                case 'c':
+                    changeBee(conn);
+                    break;
+                case 'd':
+                    insertNightjar(conn);
+                    break;
+                case 'e':
+                    deleteNightjar(conn);
                     break;
                 case 'q':
                     repeatMenu = false;
@@ -700,6 +717,94 @@ public class BioSystem {
         }
     }
 
+    private static void adult400More(Connection conn){
+        String selectQuery = "SELECT anage.species, anage.commonname FROM anage WHERE anage.adultweight > (200*anage.birthweight)";
+        try{
+            PreparedStatement preparedStatement = conn.prepareStatement(selectQuery);
+            ResultSet rs = preparedStatement.executeQuery();
+            while(rs.next()){
+                // get the column 1 of current row, only 1 column is selected
+                // row get down +1 per time
+                System.out.format("%56s, %-31s\t\n", rs.getString(2),rs.getString(1));
+            }
+        }catch(SQLException e){
+            System.err.format("SQL State: %s\n%s\n", e.getSQLState(), e.getMessage());
+            e.printStackTrace();
+        }
+    }
 
+    private static void changeBee(Connection conn){
+        String sql = "UPDATE anage SET adultweight = 3 WHERE species = 'Apis mellifera'";
+        // species is primary key
+        try{
+            PreparedStatement preparedStatement = conn.prepareStatement(sql);
+            // create prepared statement
+            int success = preparedStatement.executeUpdate();
+            // get int as file discriptor?
+            if(success < 0){
+                // unsucessful
+                System.out.println("Update failed.");
+            }
+            else {
+                System.out.println("Update sucessful.");
+            }
+        }catch(SQLException e){
+            System.err.format("SQL State: %s\n%s\n", e.getSQLState(), e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    private static void insertNightjar(Connection conn){
+        String sql = "INSERT INTO anage(Species, CommonName, GestationIncubation, LitterOrClutchSize) VALUES (?,?,?,?)";
+        try{
+            PreparedStatement psql = conn.prepareStatement(sql);
+            // you cant directly write whole, but it's good to have a practice
+//            psql.setString(1, "species");
+//            psql.setString(2, "commonname");
+//            psql.setString(3, "GestationIncubation");
+//            psql.setString(4, "LitterOrClutchSize");
+            psql.setString(1, "Caprimulgus indicus");
+            psql.setString(2, "Jungle nightjar");
+            psql.setInt(3, 16);
+            psql.setInt(4, 2);
+
+            // can't insert anage?
+            // failed
+            // create prepared statement
+            int success = psql.executeUpdate();
+            // get int as file discriptor?
+            if(success < 0){
+                // unsucessful
+                System.out.println("Insert failed.");
+            }
+            else {
+                System.out.println("Insert sucessful.");
+            }
+        }catch(SQLException e){
+            System.err.format("SQL State: %s\n%s\n", e.getSQLState(), e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    private static void deleteNightjar(Connection conn){
+        String sql = "DELETE FROM anage WHERE species = 'Caprimulgus indicus'";
+        // species is primary key
+        try{
+            PreparedStatement preparedStatement = conn.prepareStatement(sql);
+            // create prepared statement
+            int success = preparedStatement.executeUpdate();
+            // get int as file discriptor?
+            if(success < 0){
+                // unsucessful
+                System.out.println("Delete failed.");
+            }
+            else {
+                System.out.println("Delete sucessful.");
+            }
+        }catch(SQLException e){
+            System.err.format("SQL State: %s\n%s\n", e.getSQLState(), e.getMessage());
+            e.printStackTrace();
+        }
+    }
 
 }
